@@ -42,8 +42,7 @@ endif()
 add_library(imshow imshow/imshow.h imshow/imshow.cpp)
 target_link_libraries(imshow PUBLIC ${IMSHOW_3RDPARTY_LIBS})
 target_include_directories(imshow PUBLIC
-  "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>"
-  "$<INSTALL_INTERFACE:include>"
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>"
   )
 
 if(IMSHOW_WITH_OPENCV)
@@ -71,7 +70,7 @@ if(IMSHOW_BUILD_EXAMPLES)
       install(TARGETS imshow-test-cv DESTINATION bin)
     endif()
   endif()
-  
+
 endif()
 
 ###############
@@ -106,7 +105,7 @@ configure_package_config_file(
 )
 
 install(
-    TARGETS ${PROJECT_NAME}
+    TARGETS imshow
     EXPORT "${targets_export_name}"
     LIBRARY DESTINATION "lib"
     ARCHIVE DESTINATION "lib"
