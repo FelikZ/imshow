@@ -204,6 +204,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
     {
         g_state.key = tolower(key);
         g_state.key_update = true;
+        glfwPostEmptyEvent(); // be sure to notify event loop
     }
 }
 static void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -246,31 +247,17 @@ static void window_close_callback(GLFWwindow *window)
 void imshow(const char * name, const Image & img)
 {
     std::unique_lock<std::mutex> lock(g_state.mutex);
-
+    
+    std::string s_name(name);
+    
     if(g_state.windows.empty())
     {
         g_state.init();
     }
 
-    std::string s_name(name);
-
-    bool hasWindow = false;
-    int x, y;
-
+    // Terminate any windows with the same name, create anew
     auto iter = g_state.windows.find(s_name);
-    if(iter != g_state.windows.end())
-    {
-        hasWindow = true;
-        
-        // Store last known position for new window:
-        x = iter->second.x;
-        y = iter->second.y;
-
-        eraseWindow(iter);
-        iter = g_state.windows.end();
-    }
-
-    if (iter == g_state.windows.end())
+    if(iter == g_state.windows.end())
     {
         // OS X:
         // * must create window prior to glGenTextures on OS X
@@ -290,14 +277,9 @@ void imshow(const char * name, const Image & img)
         GLuint tex;
         glGenTextures(1, &tex);
 
-        if(hasWindow)
-        {
-            glfwSetWindowPos(window, x, y);
-        }
-        else
-        {
-            glfwGetWindowPos(window, &x, &y);
-        }
+        int x, y;
+        glfwGetWindowPos(window, &x, &y);
+        
         g_state.windows[s_name] = {window, tex, img, x, y};
     }
 
@@ -348,44 +330,27 @@ char getKey(bool wait)
     g_state.close = false;
 
     std::vector<std::string> toDelete;
-    for (const auto & win : g_state.windows)
+    if (wait)
     {
-        if (glfwWindowShouldClose(win.second.win))
+        do
         {
-            g_state.close = true;
-            toDelete.push_back(win.first);
-        }
-        else
-        {
-            glfwMakeContextCurrent(win.second.win);
-            glfwSwapBuffers(win.second.win);
-            lock.unlock();
-            if (wait && !g_state.close)
+            glfwWaitEvents();
+            for(const auto &win : g_state.windows)
             {
-                do
+                if(glfwWindowShouldClose(win.second.win))
                 {
-                    glfwWaitEvents();
-                    if(glfwWindowShouldClose(win.second.win))
-                    {
-                        g_state.close = true;
-                        toDelete.push_back(win.first);
-                    }
+                    g_state.close = true;
+                    toDelete.push_back(win.first);
                 }
-                while (!g_state.key_update && !g_state.close);
-            }
-            else
-            {
-                glfwPollEvents();
-            }
-            lock.lock();
-
-            if (!g_state.key_update)
-            {
-                g_state.key = '\0';
             }
         }
+        while (!g_state.key_update && !g_state.close);
     }
-
+    else
+    {
+        glfwPollEvents();
+    }
+    
     g_state.key_update = false;
     for (const auto & name : toDelete)
     {
