@@ -85,7 +85,18 @@ inline ImType getImType(const cv::Mat &image)
 inline void imshow(const char * name, const cv::Mat &image)
 {
     CV_Assert(image.isContinuous());
-    imshow(name, {const_cast<void*>(image.ptr<void>()), getImType(image), image.cols, image.rows, image.channels(), static_cast<int>(image.step1())});
+    
+    const Image frame
+    {
+        const_cast<void*>(image.ptr<void>()),
+        getImType(image),
+        image.cols,
+        image.rows,
+        image.channels(),
+        static_cast<int>(image.step1())
+    };
+    
+    imshow(name, frame);
 }
 
 inline char waitKey(int value = 0)
