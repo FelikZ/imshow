@@ -256,8 +256,7 @@ void imshow(const char * name, const Image & img)
     }
 
     // Terminate any windows with the same name, create anew
-    auto iter = g_state.windows.find(s_name);
-    if(iter == g_state.windows.end())
+    if(g_state.windows.count(s_name) == 0)
     {
         // OS X:
         // * must create window prior to glGenTextures on OS X

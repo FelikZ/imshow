@@ -7,7 +7,7 @@ HunterGate(
   LOCAL
   )
 
-project(imshow VERSION 1.0.0)
+project(imshow VERSION 1.0.1)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
